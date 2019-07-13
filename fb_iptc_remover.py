@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os, argparse, imghdr, binascii
 from iptcinfo3 import IPTCInfo
 
