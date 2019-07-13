@@ -4,47 +4,47 @@ import os, argparse, imghdr, binascii
 from iptcinfo3 import IPTCInfo
 
 def process_file(curr_dir, file, random_replace=False, verbose=False):
+    if verbose:
+        print(" -- File:", file, end=' (')
+
+    filepath = os.path.join(curr_dir, file)
+    img_type = imghdr.what(filepath)
+
+    if img_type is not None:
+        if verbose:
+            print(img_type, end='). ')
+
+        info = IPTCInfo(filepath, force=True)
+
+        special_instructions = info['special instructions']
+        if special_instructions is None:
             if verbose:
-                print(" -- File:", file, end=' (')
+                print("FBMD not found")
+            return
 
-            filepath = os.path.join(curr_dir, file)
-            img_type = imghdr.what(filepath)
+        fbmd_index = special_instructions.find(b'FBMD')
+        if fbmd_index < 0:
+            if verbose:
+                print("FBMD not found")
+            return
 
-            if img_type is not None:
-                if verbose:
-                    print(img_type, end='). ')
+        length_hex = special_instructions[fbmd_index + 6: fbmd_index + 6 + 4]
+        length = int(length_hex, 16)
 
-                info = IPTCInfo(filepath, force=True)
+        info['special instructions'] = update_instructions(
+            special_instructions, fbmd_index, length, random=random_replace
+        )
 
-                special_instructions = info['special instructions']
-                if special_instructions is None:
-                    if verbose:
-                        print("FBMD not found")
-                    return
+        if verbose:
+            print(
+                special_instructions[fbmd_index: fbmd_index + 6 + 4 + (length + 1) * 8]
+            )
 
-                fbmd_index = special_instructions.find(b'FBMD')
-                if fbmd_index < 0:
-                    if verbose:
-                        print("FBMD not found")
-                    return
-
-                length_hex = special_instructions[fbmd_index + 6: fbmd_index + 6 + 4]
-                length = int(length_hex, 16)
-
-                info['special instructions'] = update_instructions(
-                    special_instructions, fbmd_index, length, random=random_replace
-                )
-
-                if verbose:
-                    print(
-                        special_instructions[fbmd_index: fbmd_index + 6 + 4 + (length + 1) * 8]
-                    )
-
-                info.save()
-                os.remove(filepath + "~")
-            else:
-                if verbose:
-                    print("Skipping).")
+        info.save()
+        os.remove(filepath + "~")
+    else:
+        if verbose:
+            print("Skipping).")
 
 def process_directory(root, recursive=False, random_replace=False, verbose=False):
     for curr_dir, subdirs, files in os.walk(root):
