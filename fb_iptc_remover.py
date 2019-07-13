@@ -10,7 +10,11 @@ def process_file(curr_dir, file, random_replace=False, verbose=False):
     filepath = os.path.join(curr_dir, file)
     img_type = imghdr.what(filepath)
 
-    if img_type is not None:
+    if img_type is None:
+        if verbose:
+            print("Skipping).")
+        return
+    else:
         if verbose:
             print(img_type, end='). ')
 
@@ -42,9 +46,6 @@ def process_file(curr_dir, file, random_replace=False, verbose=False):
 
         info.save()
         os.remove(filepath + "~")
-    else:
-        if verbose:
-            print("Skipping).")
 
 def process_directory(root, recursive=False, random_replace=False, verbose=False):
     for curr_dir, subdirs, files in os.walk(root):
