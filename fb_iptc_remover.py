@@ -3,12 +3,7 @@
 import os, argparse, imghdr, binascii
 from iptcinfo3 import IPTCInfo
 
-def process_directory(root, recursive=False, random_replace=False, verbose=False):
-    for curr_dir, subdirs, files in os.walk(root):
-        if verbose:
-            print("Directory:", curr_dir)
-
-        for file in files:
+def process_file(curr_dir, file, random_replace=False, verbose=False):
             if verbose:
                 print(" -- File:", file, end=' (')
 
@@ -25,13 +20,13 @@ def process_directory(root, recursive=False, random_replace=False, verbose=False
                 if special_instructions is None:
                     if verbose:
                         print("FBMD not found")
-                    continue
+                    return
 
                 fbmd_index = special_instructions.find(b'FBMD')
                 if fbmd_index < 0:
                     if verbose:
                         print("FBMD not found")
-                    continue
+                    return
 
                 length_hex = special_instructions[fbmd_index + 6: fbmd_index + 6 + 4]
                 length = int(length_hex, 16)
@@ -50,6 +45,14 @@ def process_directory(root, recursive=False, random_replace=False, verbose=False
             else:
                 if verbose:
                     print("Skipping).")
+
+def process_directory(root, recursive=False, random_replace=False, verbose=False):
+    for curr_dir, subdirs, files in os.walk(root):
+        if verbose:
+            print("Directory:", curr_dir)
+
+        for file in files:
+            process_file(curr_dir, file, random_replace, verbose)
 
         if not recursive:
             break
