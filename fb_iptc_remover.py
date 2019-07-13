@@ -3,11 +3,7 @@
 import os, argparse, imghdr, binascii
 from iptcinfo3 import IPTCInfo
 
-def process_file(curr_dir, file, random_replace=False, verbose=False):
-    if verbose:
-        print(" -- File:", file, end=' (')
-
-    filepath = os.path.join(curr_dir, file)
+def process_file(filepath, random_replace=False, verbose=False):
     img_type = imghdr.what(filepath)
 
     if img_type is None:
@@ -53,7 +49,11 @@ def process_directory(root, recursive=False, random_replace=False, verbose=False
             print("Directory:", curr_dir)
 
         for file in files:
-            process_file(curr_dir, file, random_replace, verbose)
+            if verbose:
+                print(" -- File:", file, end=' (')
+
+            filepath = os.path.join(curr_dir, file)
+            process_file(filepath, random_replace, verbose)
 
         if not recursive:
             break
