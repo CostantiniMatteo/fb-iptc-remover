@@ -14,38 +14,38 @@ def process_file(curr_dir, file, random_replace=False, verbose=False):
         if verbose:
             print("Skipping).")
         return
-    else:
+
+    if verbose:
+        print(img_type, end='). ')
+
+    info = IPTCInfo(filepath, force=True)
+
+    special_instructions = info['special instructions']
+    if special_instructions is None:
         if verbose:
-            print(img_type, end='). ')
+            print("FBMD not found")
+        return
 
-        info = IPTCInfo(filepath, force=True)
+    fbmd_index = special_instructions.find(b'FBMD')
+    if fbmd_index < 0:
+        if verbose:
+            print("FBMD not found")
+        return
 
-        special_instructions = info['special instructions']
-        if special_instructions is None:
-            if verbose:
-                print("FBMD not found")
-            return
+    length_hex = special_instructions[fbmd_index + 6: fbmd_index + 6 + 4]
+    length = int(length_hex, 16)
 
-        fbmd_index = special_instructions.find(b'FBMD')
-        if fbmd_index < 0:
-            if verbose:
-                print("FBMD not found")
-            return
+    info['special instructions'] = update_instructions(
+        special_instructions, fbmd_index, length, random=random_replace
+    )
 
-        length_hex = special_instructions[fbmd_index + 6: fbmd_index + 6 + 4]
-        length = int(length_hex, 16)
-
-        info['special instructions'] = update_instructions(
-            special_instructions, fbmd_index, length, random=random_replace
+    if verbose:
+        print(
+            special_instructions[fbmd_index: fbmd_index + 6 + 4 + (length + 1) * 8]
         )
 
-        if verbose:
-            print(
-                special_instructions[fbmd_index: fbmd_index + 6 + 4 + (length + 1) * 8]
-            )
-
-        info.save()
-        os.remove(filepath + "~")
+    info.save()
+    os.remove(filepath + "~")
 
 def process_directory(root, recursive=False, random_replace=False, verbose=False):
     for curr_dir, subdirs, files in os.walk(root):
